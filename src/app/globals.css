@@ -1,0 +1,83 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100;500&family=Poppins:wght@500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+*,
+html,
+body {
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif !important;
+}
+
+button {
+  height: 45px !important;
+  border-radius: 0 !important;
+  border: 1px solid #000000 !important;
+}
+
+input,
+select {
+  width: 100% !important;
+  height: 42px !important;
+  padding: 0 10px !important;
+}
+
+.ant-form-item-label {
+  padding-bottom: 0 !important;
+}
+
+.ant-form-item {
+  margin-bottom: 0 !important;
+}
+
+hr {
+  margin: 0 !important;
+}
+
+textarea {
+  width: 100% !important;
+  min-height: 100px !important;
+  padding: 10px !important;
+}
+
+table {
+  border: 1px solid #bebebe !important;
+  border-radius: 0 !important;
+}
+
+thead th {
+  border-bottom: 1px solid #bebebe !important;
+  font-weight: bold !important;
+}
+
+.btn-small {
+  height: 30px !important;
+}
+
+a {
+  text-decoration: none !important;
+  color: #000000 !important;
+}
+
+/* scrollbar styling */
+
+::-webkit-scrollbar {
+  width: 5px !important;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #d1d1d1 !important;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #8a8a8a !important;
+}

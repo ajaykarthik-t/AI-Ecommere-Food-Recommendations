@@ -91,8 +91,8 @@ function LayoutProvider({ children }: { children: React.ReactNode }) {
               className="flex gap-2 cursor-pointer"
               onClick={() => router.push("/")}
             >
-              <h1 className="text-2xl font-bold text-red-500">Blink</h1>
-              <h1 className="text-2xl font-bold text-yellow-500">Shop</h1>
+              <h1 className="text-2xl font-bold text-red-500">Green</h1>
+              <h1 className="text-2xl font-bold text-yellow-500">Kart</h1>
             </div>
 
             <div className="flex gap-5 items-center">

@@ -30,9 +30,9 @@ function Login() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 min-h-screen">
       <div className="h-full bg-primary hidden md:flex items-center justify-center">
-        <h1 className="text-7xl font-bold text-red-500">Blink</h1>
+        <h1 className="text-7xl font-bold text-red-500">Green</h1>
         <h1 className="text-7xl font-bold text-gray-500">-</h1>
-        <h1 className="text-7xl font-bold text-yellow-500">Shop</h1>
+        <h1 className="text-7xl font-bold text-yellow-500">Kart</h1>
       </div>
 
       <div className="flex items-center justify-center h-full">

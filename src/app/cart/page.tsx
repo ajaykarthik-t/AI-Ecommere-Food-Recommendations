@@ -10,9 +10,9 @@ import { Button, Modal, Card } from "antd";
 import axios from "axios";
 import CheckoutModal from "./CheckoutModal";
 
-// Hardcoded Gemini API Key
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
-const GEMINI_API_KEY = "AIzaSyCCVEyh7UbL3I_qGHRw-R8B5VXLelAT0l8"; // Hardcoded API key
+const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY; 
+
 
 function Cart() {
   // Modal and State Management
@@ -243,18 +243,22 @@ function Cart() {
 
       {/* Recipe Modal */}
       <Modal
-        title={selectedRecipe?.name || "Recipe Details"}
-        visible={showRecipeModal}
-        onCancel={() => setShowRecipeModal(false)}
-        footer={[<Button key="close" onClick={() => setShowRecipeModal(false)}>Close</Button>]}
-        width={600}
-      >
-        {selectedRecipe && (
-          <div className="whitespace-pre-line text-base leading-relaxed text-gray-700">
-            {selectedRecipe.recipe}
-          </div>
-        )}
-      </Modal>
+  title={selectedRecipe?.name || "Recipe Details"}
+  visible={showRecipeModal}
+  onCancel={() => setShowRecipeModal(false)}
+  footer={[
+    <Button key="close" onClick={() => setShowRecipeModal(false)}>Close</Button>,
+  ]}
+  closable={false} 
+  width={600}
+>
+  {selectedRecipe && (
+    <div className="whitespace-pre-line text-base leading-relaxed text-gray-700">
+      {selectedRecipe.recipe}
+    </div>
+  )}
+</Modal>
+
 
       {/* Checkout Modal */}
       {showCheckoutModal && (

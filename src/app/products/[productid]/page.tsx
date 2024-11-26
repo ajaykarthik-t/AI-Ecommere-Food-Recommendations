@@ -10,7 +10,7 @@ async function getProduct(productid: string) {
   try {
     const cookiStore = cookies();
     const token = cookiStore.get("token")?.value;
-    const endPoint = `${process.env.domain}/api/products/${productid}`;
+    const endPoint = `${process.env.NEXT_PUBLIC_DOMAIN}/api/products/${productid}`;
     const response = await axios.get(endPoint, {
       headers: {
         Cookie: `token=${token}`,

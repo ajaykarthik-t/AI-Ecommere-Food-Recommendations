@@ -68,11 +68,10 @@ function Cart() {
         }
       );
   
-      // Handle the API response
       const recipeText = response.data?.candidates[0]?.content?.parts[0]?.text || "";
-      const recipeLines = recipeText.split("\n\n").filter(line => line.trim() !== "");
+      const recipeLines = recipeText.split("\n\n").filter((line: string) => line.trim() !== ""); // Specify 'string' type for 'line'
       
-      const parsedRecommendations = recipeLines.map((recipe, index) => {
+      const parsedRecommendations = recipeLines.map((recipe: string, index: number) => { // Specify 'string' for recipe and 'number' for index
         const [nameMatch] = recipe.match(/^\*\*(\d+\.\s*[^*]+)\*\*/) || [];
         const name = nameMatch ? nameMatch.replace(/\*\*/g, '').trim() : `Recipe ${index + 1}`;
         const recipeInstructions = recipe.replace(/^\*\*[^*]+\*\*\s*/, '').trim();
@@ -82,6 +81,7 @@ function Cart() {
           recipe: recipeInstructions
         };
       });
+      
 
       setRecommendations(parsedRecommendations);
     } catch (error) {

@@ -22,31 +22,24 @@ export async function POST(request: NextRequest) {
     }
 
     // create token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
+    const token = jwt.sign({ id: user._id }, process.env.jwt_secret!, {
       expiresIn: "7d",
     });
 
-    // Create response
     const response = NextResponse.json({
       message: "Login successful",
     });
-
-    // Set cookie
     response.cookies.set("token", token, {
       httpOnly: true,
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // Cookie expiry (7 days)
     });
-
-    // Add CORS headers to the response
-    response.headers.set("Access-Control-Allow-Origin", process.env.NEXT_PUBLIC_FRONTEND_URL || "*");  // Use your frontend domain here
-    response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
     return response;
   } catch (error: any) {
     return NextResponse.json(
-      { message: error.message || "An error occurred during login" },
+      {
+        message: error.message,
+      },
       { status: 400 }
     );
   }

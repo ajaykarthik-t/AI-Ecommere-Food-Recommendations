@@ -1,6 +1,6 @@
 "use client";
 import { getAntdFieldRequiredRule } from "@/helpers/validations";
-import { Button, Form, message } from "antd";
+import { Button, Form, Input, message } from "antd";
 import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,14 +15,17 @@ interface userType {
 function Register() {
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
+
   const onRegister = async (values: userType) => {
     try {
       setLoading(true);
-      await axios.post("/api/auth/register", values);
-      message.success("Registaration successful , please login to continue");
-      router.push("/auth/login");
+      await axios.post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/auth/register`, values);
+      message.success("Registration successful, please login to continue");
+      await router.push("/auth/login");
     } catch (error: any) {
-      message.error(error.response.data.message);
+      const errorMessage =
+        error.response?.data?.message || "An unexpected error occurred.";
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -43,37 +46,31 @@ function Register() {
           onFinish={onRegister}
         >
           <h1 className="text-2xl font-bold">Register</h1>
-
           <hr />
-
           <Form.Item
             name="name"
             label="Name"
             rules={getAntdFieldRequiredRule("Please input your name!")}
           >
-            <input type="text" />
+            <Input />
           </Form.Item>
-
           <Form.Item
             name="email"
             label="Email"
             rules={getAntdFieldRequiredRule("Please input your email!")}
           >
-            <input type="email" />
+            <Input type="email" />
           </Form.Item>
-
           <Form.Item
             name="password"
             label="Password"
             rules={getAntdFieldRequiredRule("Please input your password!")}
           >
-            <input type="password" />
+            <Input.Password />
           </Form.Item>
-
           <Button type="primary" htmlType="submit" block loading={loading}>
             Register
           </Button>
-
           <Link href="/auth/login" className="text-primary">
             Already have an account? Login
           </Link>

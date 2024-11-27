@@ -1,6 +1,6 @@
 "use client";
 import { getAntdFieldRequiredRule } from "@/helpers/validations";
-import { Button, Form, message } from "antd";
+import { Button, Form, Input, message } from "antd";
 import Link from "next/link";
 import React from "react";
 import { useRouter } from "next/navigation";
@@ -14,14 +14,17 @@ interface userType {
 function Login() {
   const [loading, setLoading] = React.useState(false);
   const router = useRouter();
+
   const onLogin = async (values: userType) => {
     try {
       setLoading(true);
-      await axios.post("/api/auth/login", values);
+      await axios.post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/auth/login`, values);
       message.success("Login successful");
-      router.push("/");
+      await router.push("/");
     } catch (error: any) {
-      message.error(error.response.data.message);
+      const errorMessage =
+        error.response?.data?.message || "An unexpected error occurred.";
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -42,31 +45,26 @@ function Login() {
           onFinish={onLogin}
         >
           <h1 className="text-2xl font-bold">Login</h1>
-
           <hr />
-
           <Form.Item
             name="email"
             label="Email"
             rules={getAntdFieldRequiredRule("Please input your email!")}
           >
-            <input type="email" />
+            <Input type="email" />
           </Form.Item>
-
           <Form.Item
             name="password"
             label="Password"
             rules={getAntdFieldRequiredRule("Please input your password!")}
           >
-            <input type="password" />
+            <Input.Password />
           </Form.Item>
-
           <Button type="primary" htmlType="submit" block loading={loading}>
             Login
           </Button>
-
           <Link href="/auth/register" className="text-primary">
-            Dont have an account? Register
+            Don’t have an account? Register
           </Link>
         </Form>
       </div>

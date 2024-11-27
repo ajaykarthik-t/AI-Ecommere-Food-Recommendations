@@ -16,15 +16,17 @@ function Login() {
   const [loading, setLoading] = React.useState(false); // Loading state for form submission
   const router = useRouter();
 
+  // Login function to send credentials to the backend
   const onLogin = async (values: userType) => {
     try {
       setLoading(true);
 
-      // Ensure environment variable is properly set
+      // Ensure the environment variable is correctly set
       const apiUrl = process.env.NEXT_PUBLIC_DOMAIN
         ? `${process.env.NEXT_PUBLIC_DOMAIN}/api/auth/login`
-        : "/api/auth/login";
+        : "/api/auth/login";  // fallback to relative path if no env variable
 
+      // Send POST request to the login API
       await axios.post(apiUrl, values);
       message.success("Login successful");
 

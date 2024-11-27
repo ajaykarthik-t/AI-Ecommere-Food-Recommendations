@@ -10,12 +10,12 @@ export async function GET(request: NextRequest) {
     const userId = await validateJWT(request);
     const user = await User.findById(userId).select("-password");
 
-    // Add CORS headers
     const response = NextResponse.json({
       data: user,
     });
 
-    response.headers.set("Access-Control-Allow-Origin", process.env.NEXT_PUBLIC_DOMAIN || "*");
+    // Set precise CORS headers
+    response.headers.set("Access-Control-Allow-Origin", process.env.NEXT_PUBLIC_DOMAIN || "https://aigrocery.vercel.app/");
     response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 

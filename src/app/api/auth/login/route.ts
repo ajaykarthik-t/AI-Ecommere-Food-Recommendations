@@ -10,26 +10,33 @@ export async function POST(request: NextRequest) {
   try {
     const reqBody = await request.json();
 
+    // Check if the user exists
     const user = await User.findOne({ email: reqBody.email });
     if (!user) {
       throw new Error("User does not exist");
     }
 
+    // Validate the password
     const passwordMatch = await bcrypt.compare(reqBody.password, user.password);
     if (!passwordMatch) {
       throw new Error("Invalid credentials");
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.jwt_secret!, {
+    // Create a JWT token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
       expiresIn: "7d",
     });
 
+    // Create the response object
     const response = NextResponse.json({
       message: "Login successful",
     });
 
-    // Add CORS headers to allow frontend to communicate with the backend
-    response.headers.set("Access-Control-Allow-Origin", process.env.NEXT_PUBLIC_FRONTEND_DOMAIN || "*");
+    // Add CORS headers
+    response.headers.set(
+      "Access-Control-Allow-Origin",
+      process.env.NEXT_PUBLIC_DOMAIN || "https://aigrocery.vercel.app/"
+    );
     response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
@@ -37,6 +44,8 @@ export async function POST(request: NextRequest) {
     response.cookies.set("token", token, {
       httpOnly: true,
       path: "/",
+      sameSite: "none", // Correct lowercase "none" for cross-origin
+      secure: true, // Ensure HTTPS is used
     });
 
     return response;

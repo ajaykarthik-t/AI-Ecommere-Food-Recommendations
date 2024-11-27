@@ -41,6 +41,12 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       message: "Login successful",
     });
+
+    // Set the CORS headers (You can set the domain or use '*' for any domain)
+    response.headers.set("Access-Control-Allow-Origin", "*");
+    response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
     response.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",  // Only secure in production

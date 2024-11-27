@@ -4,62 +4,49 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// Connect to the database
 connectDB();
 
 export async function POST(request: NextRequest) {
   try {
-    // Parse the request body
     const reqBody = await request.json();
 
-    // Validate input
-    if (!reqBody.email || !reqBody.password) {
-      return NextResponse.json(
-        { message: "Email and password are required" },
-        { status: 400 }
-      );
-    }
-
-    // Check if user exists in the database
+    // check if user exists in database or not
     const user = await User.findOne({ email: reqBody.email });
     if (!user) {
       throw new Error("User does not exist");
     }
 
-    // Check if password matches
     const passwordMatch = await bcrypt.compare(reqBody.password, user.password);
     if (!passwordMatch) {
       throw new Error("Invalid credentials");
     }
 
-    // Generate JWT token
+    // create token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
       expiresIn: "7d",
     });
 
-    // Set token in the cookie
+    // Create response
     const response = NextResponse.json({
       message: "Login successful",
     });
 
-    // Set the CORS headers (You can set the domain or use '*' for any domain)
-    response.headers.set("Access-Control-Allow-Origin", "*");
-    response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
+    // Set cookie
     response.cookies.set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",  // Only secure in production
       path: "/",
-      maxAge: 60 * 60 * 24 * 7,  // 7 days
+      maxAge: 60 * 60 * 24 * 7, // Cookie expiry (7 days)
     });
+
+    // Add CORS headers to the response
+    response.headers.set("Access-Control-Allow-Origin", process.env.NEXT_PUBLIC_FRONTEND_URL || "*");  // Use your frontend domain here
+    response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
     return response;
   } catch (error: any) {
     return NextResponse.json(
-      {
-        message: error.message || "An error occurred during login",
-      },
+      { message: error.message || "An error occurred during login" },
       { status: 400 }
     );
   }

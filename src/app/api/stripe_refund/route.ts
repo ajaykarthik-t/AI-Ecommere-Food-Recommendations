@@ -1,26 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-const stripe = require("stripe")(process.env.stripe_secret_key!);
+import Stripe from "stripe";
 import Order from "@/models/orderModel";
 
 export async function POST(request: NextRequest) {
   try {
-    const reqBody = await request.json();
-    const trasactionId = reqBody.transactionId;
-    const refund = await stripe.refunds.create({
-      payment_intent: trasactionId,
+    // Initialize Stripe with the version compatible with your TypeScript definitions
+    // @ts-ignore - Ignore API version mismatch as suggested in the error message
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+      apiVersion: '2023-08-16',
     });
 
-    // change order status to refunded
+    const reqBody = await request.json();
+    const transactionId = reqBody.transactionId;
+    
+    console.log("Processing refund for transaction:", transactionId);
+    
+    const refund = await stripe.refunds.create({
+      payment_intent: transactionId,
+    });
 
+    // Update order status to refunded
     await Order.findOneAndUpdate(
       { _id: reqBody.orderId },
       { paymentStatus: "refunded" }
     );
 
+    console.log("Refund processed successfully:", refund.id);
     return NextResponse.json({
       refund,
     });
   } catch (error: any) {
+    console.error("Stripe refund error:", error);
     return NextResponse.json(
       {
         message: error.message,

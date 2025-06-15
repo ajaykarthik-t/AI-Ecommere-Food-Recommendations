@@ -3,12 +3,14 @@ import {
   CartState,
   EditProductInCart,
   RemoveProductFromCart,
+  ClearCart,
 } from "@/redux/cartSlice";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button, Modal, Card, message } from "antd";
 import axios from "axios";
-import CheckoutModal from "./CheckoutModal";
+import { useRouter } from "next/navigation";
+import Loader from "@/components/Loader";
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
@@ -19,6 +21,7 @@ function Cart() {
   const [selectedRecipe, setSelectedRecipe] = useState<{ name: string; recipe: string } | null>(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [isRecommendationLoading, setIsRecommendationLoading] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Redux Cart Management
   const { cartItems }: CartState = useSelector((state: any) => state.cart);
@@ -28,11 +31,55 @@ function Cart() {
   );
   const total = subTotal + 50;
   const dispatch = useDispatch();
+  const router = useRouter();
 
   // Handle Recipe Modal
   const handleRecipeClick = (dish: { name: string; recipe: string }) => {
     setSelectedRecipe(dish);
     setShowRecipeModal(true);
+  };
+
+  // Direct checkout function - bypasses Stripe Elements
+  const handleDirectCheckout = async () => {
+    try {
+      setIsProcessingPayment(true);
+      
+      // Create a mock payment (simulating successful payment)
+      const mockPaymentId = `pi_${Math.random().toString(36).substring(2, 15)}`;
+      
+      // Create the order directly
+      const orderPayload = {
+        items: cartItems,
+        paymentStatus: "paid",
+        orderStatus: "order placed",
+        shippingAddress: {
+          name: "Test User",
+          address: {
+            line1: "123 Test Street",
+            city: "Test City",
+            state: "Test State",
+            postal_code: "12345",
+            country: "US"
+          }
+        },
+        transactionId: mockPaymentId,
+        total,
+      };
+      
+      // Save order to database
+      await axios.post("/api/orders/place_order", orderPayload);
+      
+      // Clear cart and redirect
+      dispatch(ClearCart());
+      message.success("Order placed successfully!");
+      router.push("/profile");
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      message.error(error.message || "Failed to process order");
+    } finally {
+      setIsProcessingPayment(false);
+      setShowCheckoutModal(false);
+    }
   };
 
   const fetchRecipeRecommendations = async () => {
@@ -270,14 +317,66 @@ function Cart() {
         )}
       </Modal>
 
-      {/* Checkout Modal */}
-      {showCheckoutModal && (
-        <CheckoutModal
-          setShowCheckoutModal={setShowCheckoutModal}
-          showCheckoutModal={showCheckoutModal}
-          total={total}
-        />
-      )}
+      {/* Direct Checkout Modal - bypassing Stripe for now */}
+      <Modal
+        title={
+          <div className="flex justify-between items-center font-bold text-xl">
+            <span>Checkout</span>
+            <span>Total: ${total}</span>
+          </div>
+        }
+        open={showCheckoutModal}
+        onCancel={() => setShowCheckoutModal(false)}
+        footer={null}
+        centered
+      >
+        {isProcessingPayment ? (
+          <div className="py-10 text-center">
+            <Loader />
+            <p className="mt-4">Processing your payment...</p>
+          </div>
+        ) : (
+          <div className="py-6">
+            <div className="bg-gray-100 p-4 rounded mb-6">
+              <h3 className="font-bold mb-2">Order Summary</h3>
+              <div className="flex justify-between mb-1">
+                <span>Subtotal:</span>
+                <span>${subTotal}</span>
+              </div>
+              <div className="flex justify-between mb-1">
+                <span>Shipping:</span>
+                <span>$50</span>
+              </div>
+              <div className="flex justify-between font-bold">
+                <span>Total:</span>
+                <span>${total}</span>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <h3 className="font-bold mb-2">Shipping Information</h3>
+              <p>123 Test Street, Test City, Test State, 12345</p>
+            </div>
+            
+            <div className="flex gap-3 mt-6">
+              <Button 
+                className="flex-1" 
+                onClick={() => setShowCheckoutModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="primary" 
+                className="flex-1" 
+                onClick={handleDirectCheckout}
+                loading={isProcessingPayment}
+              >
+                Complete Purchase
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

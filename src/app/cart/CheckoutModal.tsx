@@ -1,19 +1,18 @@
 "use client";
 import { Modal, message } from "antd";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import CheckoutForm from "./CheckoutForm";
 import Loader from "@/components/Loader";
 
-const stripePromise = loadStripe(
-  "pk_test_51QNBMcFTHEQQpVcc4bLROMIAQMPHuaIoI0JR7er9H7tjReS4TvOOoDxeib5ho5X4FwZ0xLdMmS8lQ1J9HQlVmoCH00LqfyIPYi"
-);
+// Load Stripe outside component to avoid recreating it
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 
 interface CheckoutModalProps {
   showCheckoutModal: boolean;
-  setShowCheckoutModal: any;
+  setShowCheckoutModal: (show: boolean) => void;
   total: number;
 }
 
@@ -22,26 +21,62 @@ function CheckoutModal({
   setShowCheckoutModal,
   total,
 }: CheckoutModalProps) {
-  const [loading, setLoading] = React.useState(false);
-  const [clientSecret, setClientSecret] = React.useState("");
-
-  const loadClientSecret = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.post("/api/stripe_client_secret", {
-        amount: total,
-      });
-      setClientSecret(res.data.clientSecret);
-    } catch (error: any) {
-      message.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [loading, setLoading] = useState(false);
+  const [clientSecret, setClientSecret] = useState("");
 
   useEffect(() => {
-    loadClientSecret();
-  }, []);
+    // Create PaymentIntent as soon as the modal opens
+    if (showCheckoutModal) {
+      setLoading(true);
+      
+      // Check if the Stripe publishable key is configured
+      if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+        console.error("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not configured");
+        message.error("Payment system is not properly configured. Please contact support.");
+        setLoading(false);
+        return;
+      }
+      
+      console.log("Creating payment intent for amount:", total);
+      
+      axios
+        .post("/api/stripe_client_secret", {
+          amount: total,
+        })
+        .then((res) => {
+          setClientSecret(res.data.clientSecret);
+          console.log("Client secret loaded successfully");
+        })
+        .catch((err) => {
+          console.error("Error creating payment intent:", err);
+          
+          // Show detailed error message
+          const errorMsg = err.response?.data?.message || err.message || "Could not initialize payment";
+          message.error(errorMsg);
+          
+          // Log additional details if available
+          if (err.response?.data) {
+            console.error("Error details:", err.response.data);
+          }
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [showCheckoutModal, total]);
+
+  const appearance = {
+    theme: 'stripe' as const,
+    variables: {
+      colorPrimary: '#000000',
+    },
+  };
+
+  const options = {
+    clientSecret,
+    appearance,
+  };
+
   return (
     <Modal
       title={
@@ -54,25 +89,23 @@ function CheckoutModal({
       onCancel={() => setShowCheckoutModal(false)}
       centered
       closable={false}
-      footer={false}
+      footer={null}
+      width={600}
     >
-      {loading && <Loader />}
-      <hr className="my-5" />
-      <div className="mt-5">
-        {stripePromise && clientSecret && (
-          <Elements
-            stripe={stripePromise}
-            options={{
-              clientSecret: clientSecret,
-            }}
-          >
-            <CheckoutForm
-              total={total}
-              setShowCheckoutModal={setShowCheckoutModal}
-            />
-          </Elements>
-        )}
-      </div>
+      {loading ? (
+        <Loader />
+      ) : clientSecret ? (
+        <Elements stripe={stripePromise} options={options}>
+          <CheckoutForm 
+            total={total} 
+            setShowCheckoutModal={setShowCheckoutModal} 
+          />
+        </Elements>
+      ) : (
+        <div className="py-10 text-center">
+          <p>Failed to initialize payment form. Please try again.</p>
+        </div>
+      )}
     </Modal>
   );
 }

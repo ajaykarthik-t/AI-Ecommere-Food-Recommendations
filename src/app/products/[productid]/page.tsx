@@ -1,9 +1,11 @@
+// File: src/app/products/[productid]/page.tsx (UPDATE THIS FILE)
 import React from "react";
 import { cookies } from "next/headers";
 import axios from "axios";
 import ProductImages from "./ProductImages";
 import ProductActionButtons from "./ProductActionButtons";
 import ProductReviews from "./ProductReviews";
+import WishlistButton from "@/components/WishlistButton";
 import { Rate } from "antd";
 
 async function getProduct(productid: string) {
@@ -38,7 +40,10 @@ async function ProductInfo({
           <ProductImages product={product} />
 
           <div className="flex flex-col">
-            <h1 className="text-2xl font-semibold">{product.name}</h1>
+            <div className="flex justify-between items-start">
+              <h1 className="text-2xl font-semibold flex-1">{product.name}</h1>
+              <WishlistButton product={product} />
+            </div>
 
             <div className="text-gray-600 flex flex-col gap-2">
               {product.features.map((feature: any) => (

@@ -1,3 +1,4 @@
+// File: src/providers/LayoutProvider.tsx (UPDATE THIS FILE)
 "use client";
 import { usePathname } from "next/navigation";
 import React, { useEffect } from "react";
@@ -8,16 +9,19 @@ import Loader from "@/components/Loader";
 import { SetCurrentUser } from "@/redux/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { CartState } from "@/redux/cartSlice";
+import { WishlistState, SetWishlistItems } from "@/redux/wishlistSlice";
 
 function LayoutProvider({ children }: { children: React.ReactNode }) {
   const { currentUser } = useSelector((state: any) => state.user);
   const { cartItems }: CartState = useSelector((state: any) => state.cart);
+  const { wishlistItems }: WishlistState = useSelector((state: any) => state.wishlist);
   const [loading, setLoading] = React.useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const isPrivatePage =
     pathname !== "/auth/login" && pathname !== "/auth/register";
   const dispatch = useDispatch();
+  
   const getCurrentUser = async () => {
     try {
       setLoading(true);
@@ -30,6 +34,17 @@ function LayoutProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Fetch wishlist from database when user logs in
+  const fetchWishlist = async () => {
+    try {
+      const response = await axios.get("/api/wishlist");
+      dispatch(SetWishlistItems(response.data.data));
+    } catch (error: any) {
+      // Silently fail - user might not have a wishlist yet
+      console.log("No wishlist found or error fetching wishlist");
+    }
+  };
+
   React.useEffect(() => {
     if (isPrivatePage) {
       getCurrentUser();
@@ -37,15 +52,21 @@ function LayoutProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPrivatePage, pathname]);
 
-
+  // Fetch wishlist when user is authenticated
+  React.useEffect(() => {
+    if (currentUser && isPrivatePage) {
+      fetchWishlist();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, isPrivatePage]);
 
   useEffect(() => {
-
-       // when the cartItems changes, we will save the cartItems to the localStorage
-       localStorage.setItem("cartItems", JSON.stringify(cartItems));
-
+    // Save cart items to localStorage when they change
+    localStorage.setItem("cartItems", JSON.stringify(cartItems));
   }, [cartItems]);
 
+  // Remove localStorage persistence for wishlist since we're using database
+  // The wishlist will be fetched from database on login
 
   const onLogout = async () => {
     try {
@@ -53,6 +74,7 @@ function LayoutProvider({ children }: { children: React.ReactNode }) {
       await axios.get("/api/auth/logout");
       message.success("Logout successfully");
       dispatch(SetCurrentUser(null));
+      dispatch(SetWishlistItems([])); // Clear wishlist on logout
       router.push("/auth/login");
     } catch (error: any) {
       message.error(error.response.data.message);
@@ -96,12 +118,24 @@ function LayoutProvider({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex gap-5 items-center">
+              {/* Wishlist Icon */}
+              <Badge count={wishlistItems.length} className="cursor-pointer">
+                <i
+                  className="ri-heart-line text-white text-2xl hover:text-red-300 transition-colors"
+                  onClick={() => router.push("/wishlist")}
+                  title="Wishlist"
+                ></i>
+              </Badge>
+              
+              {/* Cart Icon */}
               <Badge count={cartItems.length} className="cursor-pointer">
                 <i
                   className="ri-shopping-cart-line text-white text-2xl"
                   onClick={() => router.push("/cart")}
+                  title="Cart"
                 ></i>
               </Badge>
+              
               <Popover content={content} trigger="click">
                 <div className="flex h-8 w-8 bg-white p-2 rounded-full items-center justify-center cursor-pointer">
                   <span>{currentUser.name[0]}</span>

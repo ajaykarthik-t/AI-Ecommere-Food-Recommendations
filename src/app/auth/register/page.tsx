@@ -19,13 +19,36 @@ function Register() {
   const onRegister = async (values: userType) => {
     try {
       setLoading(true);
-      await axios.post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/auth/register`, values);
+      
+      // Use relative path for API calls (recommended for Next.js)
+      const apiUrl = "/api/auth/register";
+      
+      console.log("Attempting to register with URL:", apiUrl);
+      console.log("Registration data:", { name: values.name, email: values.email });
+
+      const response = await axios.post(apiUrl, values);
+      
+      console.log("Registration response:", response.data);
       message.success("Registration successful, please login to continue");
       await router.push("/auth/login");
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "An unexpected error occurred.";
-      message.error(errorMessage);
+      console.error("Registration error:", error);
+      
+      // Better error handling
+      if (error.response) {
+        // Server responded with error status
+        const errorMessage = error.response?.data?.message || `Server error: ${error.response.status}`;
+        console.error("Server error:", error.response.status, error.response.data);
+        message.error(errorMessage);
+      } else if (error.request) {
+        // Request was made but no response received
+        console.error("Network error:", error.request);
+        message.error("Network error: Unable to reach the server");
+      } else {
+        // Something else happened
+        console.error("Request setup error:", error.message);
+        message.error(`Request error: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -52,21 +75,21 @@ function Register() {
             label="Name"
             rules={getAntdFieldRequiredRule("Please input your name!")}
           >
-            <Input />
+            <Input placeholder="Enter your name" />
           </Form.Item>
           <Form.Item
             name="email"
             label="Email"
             rules={getAntdFieldRequiredRule("Please input your email!")}
           >
-            <Input type="email" />
+            <Input type="email" placeholder="Enter your email" />
           </Form.Item>
           <Form.Item
             name="password"
             label="Password"
             rules={getAntdFieldRequiredRule("Please input your password!")}
           >
-            <Input.Password />
+            <Input.Password placeholder="Enter your password" />
           </Form.Item>
           <Button type="primary" htmlType="submit" block loading={loading}>
             Register

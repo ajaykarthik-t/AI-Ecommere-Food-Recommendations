@@ -6,13 +6,11 @@ import {
 } from "@/redux/cartSlice";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Modal, Card } from "antd";
+import { Button, Modal, Card, message } from "antd";
 import axios from "axios";
 import CheckoutModal from "./CheckoutModal";
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
-const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY; 
-
 
 function Cart() {
   // Modal and State Management
@@ -38,6 +36,14 @@ function Cart() {
   };
 
   const fetchRecipeRecommendations = async () => {
+    // Get Gemini API key from environment variables
+    const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    
+    if (!GEMINI_API_KEY) {
+      message.error("Gemini API key is not configured. Please add NEXT_PUBLIC_GEMINI_API_KEY to your environment variables.");
+      return;
+    }
+
     setIsRecommendationLoading(true);
   
     try {
@@ -45,6 +51,11 @@ function Cart() {
       const itemNames = cartItems
         .map((item) => item.name) // Get the names of the items
         .filter((name) => name);  // Filter out any undefined or null names
+
+      if (itemNames.length === 0) {
+        message.error("Your cart is empty. Add some items to get recipe recommendations.");
+        return;
+      }
   
       const content = {
         contents: [
@@ -69,9 +80,9 @@ function Cart() {
       );
   
       const recipeText = response.data?.candidates[0]?.content?.parts[0]?.text || "";
-      const recipeLines = recipeText.split("\n\n").filter((line: string) => line.trim() !== ""); // Specify 'string' type for 'line'
+      const recipeLines = recipeText.split("\n\n").filter((line: string) => line.trim() !== "");
       
-      const parsedRecommendations = recipeLines.map((recipe: string, index: number) => { // Specify 'string' for recipe and 'number' for index
+      const parsedRecommendations = recipeLines.map((recipe: string, index: number) => {
         const [nameMatch] = recipe.match(/^\*\*(\d+\.\s*[^*]+)\*\*/) || [];
         const name = nameMatch ? nameMatch.replace(/\*\*/g, '').trim() : `Recipe ${index + 1}`;
         const recipeInstructions = recipe.replace(/^\*\*[^*]+\*\*\s*/, '').trim();
@@ -243,22 +254,21 @@ function Cart() {
 
       {/* Recipe Modal */}
       <Modal
-  title={selectedRecipe?.name || "Recipe Details"}
-  visible={showRecipeModal}
-  onCancel={() => setShowRecipeModal(false)}
-  footer={[
-    <Button key="close" onClick={() => setShowRecipeModal(false)}>Close</Button>,
-  ]}
-  closable={false} 
-  width={600}
->
-  {selectedRecipe && (
-    <div className="whitespace-pre-line text-base leading-relaxed text-gray-700">
-      {selectedRecipe.recipe}
-    </div>
-  )}
-</Modal>
-
+        title={selectedRecipe?.name || "Recipe Details"}
+        open={showRecipeModal}
+        onCancel={() => setShowRecipeModal(false)}
+        footer={[
+          <Button key="close" onClick={() => setShowRecipeModal(false)}>Close</Button>,
+        ]}
+        closable={false} 
+        width={600}
+      >
+        {selectedRecipe && (
+          <div className="whitespace-pre-line text-base leading-relaxed text-gray-700">
+            {selectedRecipe.recipe}
+          </div>
+        )}
+      </Modal>
 
       {/* Checkout Modal */}
       {showCheckoutModal && (
